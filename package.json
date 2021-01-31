@@ -1,0 +1,35 @@
+{
+  "name": "pokebot",
+  "version": "1.0.0",
+  "description": "Pokemon Telegram Bot",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikolaichub/pokeBot.git"
+  },
+  "author": "Nikolai Chub <nikolaichub.me@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nikolaichub/pokeBot/issues"
+  },
+  "homepage": "https://github.com/nikolaichub/pokeBot#readme",
+  "devDependencies": {
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-react": "^7.21.5",
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "prettier": "^2.2.1"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "pokedex-promise-v2": "^3.3.0",
+    "telegraf": "^4.0.2"
+  }
+}
