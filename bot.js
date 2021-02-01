@@ -6,9 +6,15 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 
 const createTemplate = (response) => {
   const template = `
-Name: ${response.name.charAt(0).toUpperCase() + response.name.slice(1)}
+Name: ${response.name}
 Id: ${response.id}
-Types: ${response.types}`;
+Types: ${response.type}
+Abilities: ${response.abilities}
+Weakness: ${response.weakness}
+Height: ${response.height}
+Weight: ${response.weight}
+Description: ${response.description}
+`;
   return template;
 };
 
