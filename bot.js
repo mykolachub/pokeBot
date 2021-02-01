@@ -4,8 +4,7 @@ const pokemon = require('./modules/pokemons');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const createTemplate = (response) => {
-  const template = `
+const createTemplate = (response) => `
 Name: ${response.name}
 Id: ${response.id}
 Types: ${response.type}
@@ -15,8 +14,6 @@ Height: ${response.height}
 Weight: ${response.weight}
 Description: ${response.description}
 `;
-  return template;
-};
 
 bot.start((ctx) => {
   ctx.reply('Welcome');
