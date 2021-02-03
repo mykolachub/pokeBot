@@ -1,17 +1,20 @@
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
+const Pokedex = require('pokedex-promise-v2');
 const pokemon = require('./modules/pokemons');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
+const api = new Pokedex();
 
 // creates template from Pokemon's Info
 function createTemplate(response) {
   return `
-${response.id} *${response.name}*
+*${response.name}* #${response.id}
 Type: ${response.type}
 
 ${response.description}
 
+${response.generation}
 Abilities: ${response.abilities}
 Weakness: ${response.weakness}
 Height: ${response.height}
@@ -49,6 +52,19 @@ bot.hears('Get Random Pokemon', (ctx) => {
 
 bot.on('text', (ctx) => {
   const message = ctx.message.text;
+  const command = message.startsWith('/');
+  if (command) {
+    const filter = message.replace('/', '');
+    pokemon
+      .getPokemonByType(filter)
+      .then((data) => {
+        ctx.replyWithMarkdown(data);
+      })
+      .catch((error) => {
+        console.log('There was an ERROR: ', error);
+      });
+    return;
+  }
   const number = Number(message);
   const type = number ? 'number' : 'string';
   const attr = type === 'string' ? message.trim().toLowerCase() : number;
