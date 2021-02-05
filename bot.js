@@ -50,12 +50,16 @@ bot.hears('Get Random Pokemon', (ctx) => {
   getPokemom(ctx, randomId, errorMessage);
 });
 
-bot.on('text', (ctx) => {
+bot.on('text', async (ctx) => {
   const message = ctx.message.text;
   const command = message.startsWith('/');
-  if (command) {
-    const filter = message.replace('/', '');
-    pokemon
+  const filter = message.replace('/', '');
+  const isPok = await pokemon
+    .isPokemon(filter)
+    .then((res) => res)
+    .catch((err) => err);
+  if (command && !isPok) {
+    await pokemon
       .getPokemonByType(filter)
       .then((data) => {
         ctx.replyWithMarkdown(data);
@@ -67,9 +71,9 @@ bot.on('text', (ctx) => {
   }
   const number = Number(message);
   const type = number ? 'number' : 'string';
-  const attr = type === 'string' ? message.trim().toLowerCase() : number;
+  const attr = type === 'string' ? filter.trim().toLowerCase() : number;
   const errorMessage = 'Something went wrong or there is no such pokemon.. Try again!';
-  getPokemom(ctx, attr, errorMessage);
+  await getPokemom(ctx, attr, errorMessage);
 });
 
 // bot.help((ctx) => ctx.reply('Send me a sticker'));
