@@ -8,33 +8,6 @@ const api = new Pokedex();
 // getting random pokemon id
 const getRandomPokemonId = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// getting list of pokemon filtered by type
-async function getPokemonByType(filter) {
-  const response = await api.getTypeByName(filter);
-  const list = [];
-  const pok = response.pokemon;
-  const { length } = Object.keys(pok);
-  for (let i = 0; i < length; i += 1) {
-    const { name } = pok[i].pokemon;
-    const onlyName = name.split('-')[0];
-    list.push(onlyName);
-  }
-
-  return list
-    .filter((value, index, self) => self.indexOf(value) === index)
-    .map((x) => `/${x}`)
-    .join(', ');
-}
-
-// Generation I
-// Generation II
-// Generation III
-// Generation IV
-// Generation V
-// Generation VI
-// Generation VII
-// Generation VIII
-
 // getting Pokemon's info list
 async function getPokemon(attr) {
   // getting not full info
@@ -80,11 +53,40 @@ async function getPokemon(attr) {
     .catch((err) => err);
 }
 
-// for time test
+// getting list of pokemon filtered by type
+async function getPokemonByType(filter) {
+  const list = [];
+  const response = await api.getTypeByName(filter);
+  const pok = response.pokemon;
+  const { length } = Object.keys(pok);
+  for (let i = 0; i < length; i += 1) {
+    const { name } = pok[i].pokemon;
+    const onlyName = name.split('-')[0];
+    list.push(onlyName);
+  }
+
+  return list
+    .filter((value, index, self) => self.indexOf(value) === index)
+    .map((x) => `/${x}`)
+    .join(', ');
+}
+
+// checking if pokemon
+async function isPokemon(attr) {
+  const response = await api.getPokemonsList();
+  const data = response.results;
+  const initialList = [];
+  for (let i = 0; i < data.length; i += 1) {
+    const { name } = data[i];
+    const onlyName = name.split('-')[0];
+    initialList.push(onlyName);
+  }
+  const list = initialList.filter((value, index, self) => self.indexOf(value) === index);
+  return list.includes(attr);
+}
+
 // const start = Date.now();
-// const r = getRandomPokemonId(1, 898);
-// console.log(r);
-// getPokemon(r)
+// isPokemon('ditto')
 //   .then((response) => {
 //     const end = Date.now();
 //     const time = (end - start) / 1000;
@@ -99,4 +101,5 @@ module.exports = {
   getPokemon,
   getRandomPokemonId,
   getPokemonByType,
+  isPokemon,
 };
