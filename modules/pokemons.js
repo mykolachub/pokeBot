@@ -26,7 +26,7 @@ async function getPokemon(attr) {
       id: info.id,
       type: info.type.map((x) => `/${x}`).join(', '),
       abilities: info.abilities.join(', '),
-      weakness: info.weakness.join(', '),
+      weakness: info.weakness.map((x) => `/${x.toLowerCase()}`).join(', '),
       height: `${info.height} m`,
       weight: `${info.weight} kg`,
       image: info.ThumbnailImage,
