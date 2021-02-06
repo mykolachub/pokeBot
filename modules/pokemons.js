@@ -41,8 +41,13 @@ async function getPokemon(attr) {
         obj.language.name === 'en' &&
         (obj.version.name === 'x' || obj.version.name === 'blue' || obj.version.name === 'sword')
     )[0];
+    const origGeneration = response.generation.name;
+    const firstUp = origGeneration[0].toUpperCase() + origGeneration.slice(1);
+    const splitted = firstUp.split('-');
+    const idsUp = splitted[1].toUpperCase();
+    const finGen = `${splitted[0]} ${idsUp}`;
     return {
-      generation: response.generation.name,
+      generation: finGen,
       description: match.flavor_text.replace(/\n/g, '').trim(),
     };
   }
@@ -52,6 +57,18 @@ async function getPokemon(attr) {
     .then((responsesList) => responsesList.reduce((acc, val) => ({ ...acc, ...val })))
     .catch((err) => err);
 }
+
+// const start = Date.now();
+// getPokemon('ditto')
+//   .then((response) => {
+//     const end = Date.now();
+//     const time = (end - start) / 1000;
+//     console.log(response, time);
+//     process.exit(0);
+//   })
+//   .catch((error) => {
+//     console.log('There was an ERROR: ', error);
+//   });
 
 // getting list of pokemon filtered by type
 async function getPokemonByType(filter) {
@@ -85,18 +102,6 @@ async function isPokemon(attr) {
   const list = initialList.filter((value, index, self) => self.indexOf(value) === index);
   return list.includes(attr);
 }
-
-// const start = Date.now();
-// isPokemon('ditto')
-//   .then((response) => {
-//     const end = Date.now();
-//     const time = (end - start) / 1000;
-//     console.log(response, time);
-//     process.exit(0);
-//   })
-//   .catch((error) => {
-//     console.log('There was an ERROR: ', error);
-//   });
 
 module.exports = {
   getPokemon,
