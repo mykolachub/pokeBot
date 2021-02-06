@@ -65,10 +65,11 @@ async function getPokemonByType(filter) {
     list.push(onlyName);
   }
 
-  return list
-    .filter((value, index, self) => self.indexOf(value) === index)
-    .map((x) => `/${x}`)
-    .join(', ');
+  const unique = list.filter((value, index, self) => self.indexOf(value) === index);
+  return {
+    length: unique.length,
+    list: unique.map((x) => `/${x}`).join(', '),
+  };
 }
 
 // checking if pokemon
