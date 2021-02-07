@@ -1,74 +1,54 @@
 require('dotenv').config();
 const Pokedex = require('pokedex-promise-v2');
 const fetch = require('node-fetch');
-const jsdom = require('jsdom');
 
 const api = new Pokedex();
 
 // getting random pokemon id
 const getRandomPokemonId = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// getting Pokemon's info list
-async function getPokemon(attr) {
-  // getting not full info
-  async function getInfo(attr) {
-    const response = await fetch(process.env.POKEMON_INF0);
-    const data = await response.json();
-    const matches =
-      typeof attr === 'string'
-        ? data.filter((p) => p.slug === attr)
-        : data.filter((p) => p.id === attr);
-    const { length } = matches;
-    const info = matches[length - 1];
+// getting not full pokemon info
+async function getPokemonInfo(attr) {
+  const response = await fetch(process.env.POKEMON_INF0);
+  const data = await response.json();
+  const matches =
+    typeof attr === 'string'
+      ? data.filter((p) => p.slug === attr)
+      : data.filter((p) => p.id === attr);
+  const { length } = matches;
+  const info = matches[length - 1];
 
-    return {
-      name: info.name,
-      id: info.id,
-      type: info.type.map((x) => `/${x}`).join(', '),
-      abilities: info.abilities.join(', '),
-      weakness: info.weakness.map((x) => `/${x.toLowerCase()}`).join(', '),
-      height: `${info.height} m`,
-      weight: `${info.weight} kg`,
-      image: info.ThumbnailImage,
-    };
-  }
-
-  async function getGenAndDesc(attr) {
-    const response = await api.getPokemonSpeciesByName(attr);
-    const list = response.flavor_text_entries;
-    const match = list.filter(
-      (obj) =>
-        obj.language.name === 'en' &&
-        (obj.version.name === 'x' || obj.version.name === 'blue' || obj.version.name === 'sword')
-    )[0];
-    const origGeneration = response.generation.name;
-    const firstUp = origGeneration[0].toUpperCase() + origGeneration.slice(1);
-    const splitted = firstUp.split('-');
-    const idsUp = splitted[1].toUpperCase();
-    const finGen = `${splitted[0]} ${idsUp}`;
-    return {
-      generation: finGen,
-      description: match.flavor_text.replace(/\n/g, '').trim(),
-    };
-  }
-
-  const promises = [getInfo(attr), getGenAndDesc(attr)];
-  return Promise.all(promises)
-    .then((responsesList) => responsesList.reduce((acc, val) => ({ ...acc, ...val })))
-    .catch((err) => err);
+  return {
+    name: info.name,
+    id: info.id,
+    type: info.type.map((x) => `/${x}`).join(', '),
+    abilities: info.abilities.join(', '),
+    weakness: info.weakness.map((x) => `/${x.toLowerCase()}`).join(', '),
+    height: `${info.height} m`,
+    weight: `${info.weight} kg`,
+    image: info.ThumbnailImage,
+  };
 }
 
-// const start = Date.now();
-// getPokemon('ditto')
-//   .then((response) => {
-//     const end = Date.now();
-//     const time = (end - start) / 1000;
-//     console.log(response, time);
-//     process.exit(0);
-//   })
-//   .catch((error) => {
-//     console.log('There was an ERROR: ', error);
-//   });
+// getting pokemons generation and description
+async function getGenerationAndDescription(attr) {
+  const response = await api.getPokemonSpeciesByName(attr);
+  const list = response.flavor_text_entries;
+  const match = list.filter(
+    (obj) =>
+      obj.language.name === 'en' &&
+      (obj.version.name === 'x' || obj.version.name === 'blue' || obj.version.name === 'sword')
+  )[0];
+  const origGeneration = response.generation.name;
+  const firstUp = origGeneration[0].toUpperCase() + origGeneration.slice(1);
+  const splitted = firstUp.split('-');
+  const idsUp = splitted[1].toUpperCase();
+  const finGen = `${splitted[0]} ${idsUp}`;
+  return {
+    generation: finGen,
+    description: match.flavor_text.replace(/\n/g, '').trim(),
+  };
+}
 
 // getting list of pokemon filtered by type
 async function getPokemonByType(filter) {
@@ -103,8 +83,22 @@ async function isPokemon(attr) {
   return list.includes(attr);
 }
 
+// for tests:
+// const start = Date.now();
+// getPokemon('ditto')
+//   .then((response) => {
+//     const end = Date.now();
+//     const time = (end - start) / 1000;
+//     console.log(response, time);
+//     process.exit(0);
+//   })
+//   .catch((error) => {
+//     console.log('There was an ERROR: ', error);
+//   });
+
 module.exports = {
-  getPokemon,
+  getPokemonInfo,
+  getGenerationAndDescription,
   getRandomPokemonId,
   getPokemonByType,
   isPokemon,
