@@ -33,6 +33,7 @@
     "jsdom": "^16.4.0",
     "node-fetch": "^2.6.1",
     "pokedex-promise-v2": "^3.3.0",
-    "telegraf": "^4.0.2"
+    "telegraf": "^4.0.2",
+    "telegram-keyboard": "^2.2.6"
   }
 }
