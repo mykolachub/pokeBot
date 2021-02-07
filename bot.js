@@ -5,7 +5,7 @@ const pokemon = require('./modules/pokemons');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // creates template from Pokemon's Info
-function createTemplate(response) {
+function createTemplateByPokemon(response) {
   return `
 *${response.name}* #${response.id}
 Type: ${response.type}
@@ -19,19 +19,12 @@ Height: ${response.height}
 Weight: ${response.weight}`;
 }
 
-// getting Pokemon Info
-function getPokemom(ctx, attr, mess) {
-  return pokemon
-    .getPokemon(attr)
-    .then((response) => {
-      ctx.replyWithPhoto(
-        { url: response.image },
-        { caption: createTemplate(response), parse_mode: 'Markdown' }
-      );
-    })
-    .catch(() => {
-      ctx.reply(mess);
-    });
+function createTemplateByType(filter, data) {
+  return `
+Here is list of *${filter}* pokemons: ${data.length} ones
+
+${data.list}
+  `;
 }
 
 bot.start((ctx) => {
@@ -42,10 +35,23 @@ bot.start((ctx) => {
   });
 });
 
-bot.hears('Get Random Pokemon', (ctx) => {
+bot.hears('Get Random Pokemon', async (ctx) => {
   const randomId = pokemon.getRandomPokemonId(1, 898);
-  const errorMessage = 'Something went wrong.. Try again!';
-  getPokemom(ctx, randomId, errorMessage).catch(() => ctx.reply('error'));
+  const errorMessage = 'There is no such POKEMON.. Try again!';
+  const promises = [
+    pokemon.getPokemonInfo(randomId),
+    pokemon.getGenerationAndDescription(randomId),
+  ];
+  try {
+    const responses = await Promise.all(promises);
+    const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
+    ctx.replyWithPhoto(
+      { url: data.image },
+      { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+    );
+  } catch (err) {
+    ctx.reply(errorMessage);
+  }
 });
 
 bot.on('text', async (ctx) => {
@@ -54,53 +60,45 @@ bot.on('text', async (ctx) => {
   const filter = message.replace('/', '');
 
   // проверка является ли сообщение покемоном
-  await pokemon
+  return pokemon
     .isPokemon(filter)
-    .then((res) => {
+    .then(async (res) => {
       const isPokemon = res;
       const number = Number(filter);
 
-      // если покемон
+      // если покемон: name, /name, number, /number
       if (isPokemon || number) {
         const type = number ? 'number' : 'string';
         const attr = type === 'string' ? filter.trim().toLowerCase() : number;
-        const errorMessage = 'Something went wrong or there is no such POKEMON.. Try again!';
-        pokemon
-          .getPokemon(attr)
-          .then((response) => {
-            ctx.replyWithPhoto(
-              { url: response.image },
-              { caption: createTemplate(response), parse_mode: 'Markdown' }
-            );
-          })
-          .catch(() => {
-            ctx.reply(errorMessage);
-          });
-
-        // если не покемон а тип
-      } else if (command && filter !== 'start') {
-        pokemon
-          .getPokemonByType(filter)
-          .then((data) => {
-            const template = `
-              Here is list of *${filter}* pokemons: ${data.length} ones
-      
-${data.list}`.trim();
-            ctx.replyWithMarkdown(template);
-          })
-          .catch((e) => {
-            ctx.reply('Something went wrong or there is no such pokemon TYPE.. Try again!');
-            console.log(e);
-          });
+        const errorMessage = 'There is no such POKEMON.. Try again!';
+        const promises = [pokemon.getPokemonInfo(attr), pokemon.getGenerationAndDescription(attr)];
+        try {
+          const responses = await Promise.all(promises);
+          const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
+          ctx.replyWithPhoto(
+            { url: data.image },
+            { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+          );
+        } catch (err) {
+          ctx.reply(errorMessage);
+        }
+      } else if (command && filter !== 'start' && !isPokemon) {
+        // если не покемон а тип: /type
+        const errorMessage = 'There is no such pokemon TYPE.. Try again!';
+        try {
+          const data = await pokemon.getPokemonByType(filter);
+          const template = createTemplateByType(filter, data);
+          ctx.replyWithMarkdown(template);
+        } catch (error) {
+          ctx.reply(errorMessage);
+        }
+      } else {
+        ctx.reply('I do not know what that is.. Try again!');
       }
     })
-    .catch((err) => {
-      ctx.reply('There is no such pokemon.. Try again!');
-      console.log(err);
+    .catch(() => {
+      ctx.reply('I do not know what that is.. Try again!');
     });
 });
-
-// bot.help((ctx) => ctx.reply('Send me a sticker'));
-// bot.hears('hi', (ctx) => ctx.reply('Hey there'));
 
 bot.launch();
