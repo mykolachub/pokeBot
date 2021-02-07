@@ -93,7 +93,7 @@ bot.hears('Get Random Pokemon', async (ctx) => {
 bot.on('text', async (ctx) => {
   const message = ctx.message.text;
   const command = message.startsWith('/');
-  const filter = message.replace('/', '');
+  const filter = message.replace('/', '').trim().toLowerCase();
 
   // проверка является ли сообщение покемоном
   return pokemon
@@ -105,7 +105,7 @@ bot.on('text', async (ctx) => {
       // если покемон: name, /name, number, /number
       if (isPokemon || number) {
         const type = number ? 'number' : 'string';
-        const attr = type === 'string' ? filter.trim().toLowerCase() : number;
+        const attr = type === 'string' ? filter : number;
         const errorMessage = 'There is no such _Pokémon_.. Try again!';
         const promises = [pokemon.getPokemonInfo(attr), pokemon.getGenerationAndDescription(attr)];
         try {
