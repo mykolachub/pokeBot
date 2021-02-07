@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
+const { Keyboard, Key } = require('telegram-keyboard');
 const pokemon = require('./modules/pokemons');
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -27,35 +28,8 @@ ${data.list}
   `;
 }
 
-const app = {
-  started: false,
-};
-
-bot.start((ctx) => {
-  if (!app.started) {
-    const messId = ctx.message.message_id;
-    const chatId = ctx.chat.id;
-    ctx.replyWithMarkdown(
-      `
-*Short Introduction:*
-That bot can send you short Pokémon's info
-
-*Сommands:*
-To get a Pokémon, send its _name_ or _index_
-To get list of Pokémons by type, send / + _type_
-To get random one, use built-in keyboard`,
-      {
-        ...Markup.keyboard(['Get Random Pokemon']).resize(),
-      }
-    );
-    ctx.telegram.pinChatMessage(chatId, messId + 1);
-    app.started = true;
-  } else {
-    ctx.reply('Bot has already been started');
-  }
-});
-
-bot.hears('Get Random Pokemon', async (ctx) => {
+// getting random pokemon
+async function randomPokemon(ctx) {
   const randomId = pokemon.getRandomPokemonId(1, 898);
   const errorMessage = 'Something went wrong.. Try again!';
   const promises = [
@@ -65,13 +39,55 @@ bot.hears('Get Random Pokemon', async (ctx) => {
   try {
     const responses = await Promise.all(promises);
     const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
-    ctx.replyWithPhoto(
+    return ctx.replyWithPhoto(
       { url: data.image },
       { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
     );
   } catch (err) {
-    ctx.replyWithMarkdown(errorMessage);
+    return ctx.replyWithMarkdown(errorMessage);
   }
+}
+
+const app = {
+  started: false,
+  help_mess: null,
+};
+
+bot.start(async (ctx) => {
+  if (!app.started) {
+    app.help_mess = `
+*Short Introduction:*
+That bot can send you short Pokémon's info
+
+*Сommands:*
+To get a Pokémon, send its _name_ or _index_
+To get list of Pokémons by type, send / + _type_
+To get random one, go with /random or use built-in keyboard`;
+    const keyboard = Keyboard.make([Key.callback('Get Random Pokemon', '/random')]);
+    ctx.replyWithMarkdown(app.help_mess, keyboard.reply());
+    app.started = true;
+  } else {
+    ctx.reply('Bot has already been started');
+  }
+});
+
+// sends short into
+bot.help((ctx) => {
+  if (app.help_mess !== null) {
+    ctx.replyWithMarkdown(app.help_mess);
+    return;
+  }
+  ctx.replyWithMarkdown('Bot must be started first!');
+});
+
+// sends random pokemon
+bot.command('random', async (ctx) => {
+  await randomPokemon(ctx);
+});
+
+// sends random pokemon
+bot.hears('Get Random Pokemon', async (ctx) => {
+  await randomPokemon(ctx);
 });
 
 bot.on('text', async (ctx) => {
@@ -120,5 +136,10 @@ bot.on('text', async (ctx) => {
       ctx.replyWithMarkdown('I do not know what that is.. Try again!');
     });
 });
+
+bot.telegram.setMyCommands([
+  { command: 'help', description: 'What can this bot do?' },
+  { command: 'random', description: 'Get Random Pokemon' },
+]);
 
 bot.launch();
