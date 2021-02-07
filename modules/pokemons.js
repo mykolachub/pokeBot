@@ -9,6 +9,24 @@ const getRandomPokemonId = (min, max) => Math.floor(Math.random() * (max - min +
 
 // getting not full pokemon info
 async function getPokemonInfo(attr) {
+  if (
+    attr === 'timur' ||
+    attr === 'marcus' ||
+    attr === 'shems' ||
+    attr === 'NaN' ||
+    attr === 6666
+  ) {
+    return {
+      name: 'Marcus Aurelius',
+      id: 'NaN',
+      type: 'Chief',
+      abilities: 'NodeJS',
+      weakness: 'Java, ORM, IP-05',
+      height: 'undefined',
+      weight: 'undefined',
+      image: 'marcus.png',
+    };
+  }
   const response = await fetch(process.env.POKEMON_INF0);
   const data = await response.json();
   const matches =
@@ -32,6 +50,19 @@ async function getPokemonInfo(attr) {
 
 // getting pokemons generation and description
 async function getGenerationAndDescription(attr) {
+  if (
+    attr === 'timur' ||
+    attr === 'marcus' ||
+    attr === 'shems' ||
+    attr === 'NaN' ||
+    attr === 6666
+  ) {
+    return {
+      generation: 'Generation X',
+      description:
+        '26 years in IT, expert in private clouds, software engineering, cybernetics, distributed systems, architecture, multi-paradigm & meta-programming',
+    };
+  }
   const response = await api.getPokemonSpeciesByName(attr);
   const list = response.flavor_text_entries;
   const match = list.filter(
@@ -71,6 +102,15 @@ async function getPokemonByType(filter) {
 
 // checking if pokemon
 async function isPokemon(attr) {
+  if (
+    attr === 'timur' ||
+    attr === 'marcus' ||
+    attr === 'shems' ||
+    attr === 'NaN' ||
+    attr === 6666
+  ) {
+    return true;
+  }
   const response = await api.getPokemonsList();
   const data = response.results;
   const initialList = [];

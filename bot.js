@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Telegraf, Markup } = require('telegraf');
+const { Telegraf } = require('telegraf');
 const { Keyboard, Key } = require('telegram-keyboard');
 const pokemon = require('./modules/pokemons');
 
@@ -101,7 +101,6 @@ bot.on('text', async (ctx) => {
     .then(async (res) => {
       const isPokemon = res;
       const number = Number(filter);
-
       // если покемон: name, /name, number, /number
       if (isPokemon || number) {
         const type = number ? 'number' : 'string';
@@ -111,10 +110,24 @@ bot.on('text', async (ctx) => {
         try {
           const responses = await Promise.all(promises);
           const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
-          ctx.replyWithPhoto(
-            { url: data.image },
-            { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
-          );
+          // for special quest
+          if (
+            attr === 'timur' ||
+            attr === 'marcus' ||
+            attr === 'shems' ||
+            attr === 'NaN' ||
+            attr === 6666
+          ) {
+            ctx.replyWithPhoto(
+              { source: data.image },
+              { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+            );
+          } else {
+            ctx.replyWithPhoto(
+              { url: data.image },
+              { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+            );
+          }
         } catch (err) {
           ctx.replyWithMarkdown(errorMessage);
         }
