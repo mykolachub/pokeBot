@@ -1,32 +1,32 @@
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const { Keyboard, Key } = require('telegram-keyboard');
+const mongoose = require('mongoose');
 const pokemon = require('./modules/pokemons');
+const template = require('./modules/templates');
+
+// connecting database
+mongoose.connect(process.env.MONGO_KEY, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const db = mongoose.connection;
+db.on('error', (e) => {
+  console.log('database connection error', e);
+});
+db.once('open', () => {
+  console.log('connected to database');
+});
+
+const userSchema = new mongoose.Schema({
+  userId: Number,
+  name: String,
+  pokemons: Array,
+});
+
+// user
+const User = mongoose.model('User', userSchema);
+let user;
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-
-// creates template from Pokemon's Info
-function createTemplateByPokemon(response) {
-  return `
-*${response.name}* #${response.id}
-Type: ${response.type}
-
-${response.description}
-
-${response.generation}
-Abilities: ${response.abilities}
-Weakness: ${response.weakness}
-Height: ${response.height}
-Weight: ${response.weight}`;
-}
-
-function createTemplateByType(filter, data) {
-  return `
-Here is list of *${filter}* pokemons: ${data.length} ones
-
-${data.list}
-  `;
-}
 
 // getting random pokemon
 async function randomPokemon(ctx) {
@@ -41,43 +41,44 @@ async function randomPokemon(ctx) {
     const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
     return ctx.replyWithPhoto(
       { url: data.image },
-      { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+      { caption: template.getTemplateByPokemon(data), parse_mode: 'Markdown' }
     );
   } catch (err) {
     return ctx.replyWithMarkdown(errorMessage);
   }
 }
 
-const app = {
-  started: false,
-  help_mess: null,
-};
+bot.start((ctx) => {
+  // проверка есть ли юзер в базе
+  User.find({ userId: ctx.message.chat.id }, (err, docs) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    if (docs.length === 0) {
+      // создает нового юзера
+      user = new User({
+        name: ctx.message.chat.first_name,
+        userId: ctx.message.chat.id,
+        pokemons: [],
+      });
 
-bot.start(async (ctx) => {
-  if (!app.started) {
-    app.help_mess = `
-*Short Introduction:*
-That bot can send you short Pokémon's info
-
-*Сommands:*
-To get a Pokémon, send its _name_ or _index_
-To get list of Pokémons by type, send / + _type_
-To get random one, go with /random or use built-in keyboard`;
-    const keyboard = Keyboard.make([Key.callback('Get Random Pokemon', '/random')]);
-    ctx.replyWithMarkdown(app.help_mess, keyboard.reply());
-    app.started = true;
-  } else {
+      // сохраняю в базу
+      user.save((e) => {
+        if (e) console.log(e);
+        console.log('User successfuly registered');
+      });
+      const keyboard = Keyboard.make([Key.callback('Get Random Pokemon', '/random')]);
+      ctx.replyWithMarkdown(template.getStart(), keyboard.reply());
+      return;
+    }
     ctx.reply('Bot has already been started');
-  }
+  });
 });
 
 // sends short into
 bot.help((ctx) => {
-  if (app.help_mess !== null) {
-    ctx.replyWithMarkdown(app.help_mess);
-    return;
-  }
-  ctx.replyWithMarkdown('Bot must be started first!');
+  ctx.replyWithMarkdown(template.getStart());
 });
 
 // sends random pokemon
@@ -112,7 +113,7 @@ bot.on('text', async (ctx) => {
           const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
           ctx.replyWithPhoto(
             { url: data.image },
-            { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+            { caption: template.getTemplateByPokemon(data), parse_mode: 'Markdown' }
           );
         } catch (err) {
           ctx.replyWithMarkdown(errorMessage);
@@ -122,8 +123,7 @@ bot.on('text', async (ctx) => {
         const errorMessage = 'There is no such Pokémon _type_.. Try again!';
         try {
           const data = await pokemon.getPokemonByType(filter);
-          const template = createTemplateByType(filter, data);
-          ctx.replyWithMarkdown(template);
+          ctx.replyWithMarkdown(template.getTemplateByType(filter, data));
         } catch (error) {
           ctx.replyWithMarkdown(errorMessage);
         }
