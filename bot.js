@@ -110,24 +110,10 @@ bot.on('text', async (ctx) => {
         try {
           const responses = await Promise.all(promises);
           const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
-          // for special quest
-          if (
-            attr === 'timur' ||
-            attr === 'marcus' ||
-            attr === 'shems' ||
-            attr === 'NaN' ||
-            attr === 6666
-          ) {
-            ctx.replyWithPhoto(
-              { source: data.image },
-              { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
-            );
-          } else {
-            ctx.replyWithPhoto(
-              { url: data.image },
-              { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
-            );
-          }
+          ctx.replyWithPhoto(
+            { url: data.image },
+            { caption: createTemplateByPokemon(data), parse_mode: 'Markdown' }
+          );
         } catch (err) {
           ctx.replyWithMarkdown(errorMessage);
         }
