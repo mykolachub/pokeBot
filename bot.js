@@ -20,13 +20,19 @@ const userSchema = new mongoose.Schema({
   userId: Number,
   name: String,
   pokemons: Array,
+  dailyPrize: Boolean,
 });
 
 // user
 const User = mongoose.model('User', userSchema);
 let user;
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+// local chat data
+const localData = {
+  id: null,
+};
+
+const bot = new Telegraf(process.env.BOT_TOKEN_TEST);
 
 // getting random pokemon
 async function randomPokemon(ctx) {
@@ -48,6 +54,11 @@ async function randomPokemon(ctx) {
   }
 }
 
+function startDailyPrize(ctx) {
+  const keyboard = Keyboard.make([Key.callback('Get Random', 'random')]);
+  return ctx.reply('You can catch a random Pokemon', keyboard.inline());
+}
+
 bot.start((ctx) => {
   // проверка есть ли юзер в базе
   User.find({ userId: ctx.message.chat.id }, (err, docs) => {
@@ -61,35 +72,50 @@ bot.start((ctx) => {
         name: ctx.message.chat.first_name,
         userId: ctx.message.chat.id,
         pokemons: [],
+        dailyPrize: false,
       });
+
+      // setting id localy
+      localData.id = ctx.message.chat.id;
 
       // сохраняю в базу
       user.save((e) => {
         if (e) console.log(e);
-        console.log('User successfuly registered');
+        console.log(`${ctx.message.chat.first_name} successfuly registered`);
       });
-      const keyboard = Keyboard.make([Key.callback('Get Random Pokemon', '/random')]);
+
+      const keyboard = Keyboard.make(['/help', '/collection']);
       ctx.replyWithMarkdown(template.getStart(), keyboard.reply());
+      startDailyPrize(ctx);
       return;
     }
     ctx.reply('Bot has already been started');
   });
 });
 
-// sends short into
-bot.help((ctx) => {
-  ctx.replyWithMarkdown(template.getStart());
+// sends help into
+bot.command('help', (ctx) => ctx.replyWithMarkdown(template.getHelp()));
+
+// get and send user collection
+bot.command('collection', async (ctx) => {
+  User.findOne({ userId: localData.id }, (err, user) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    if (user.pokemons) ctx.reply(template.createCollectionTemplate(user.pokemons));
+  });
 });
 
 // sends random pokemon
-bot.command('random', async (ctx) => {
+bot.action('random', async (ctx) => {
   await randomPokemon(ctx);
 });
 
 // sends random pokemon
-bot.hears('Get Random Pokemon', async (ctx) => {
-  await randomPokemon(ctx);
-});
+// bot.hears('Get Random Pokemon', async (ctx) => {
+//   await randomPokemon(ctx);
+// });
 
 bot.on('text', async (ctx) => {
   const message = ctx.message.text;
@@ -137,8 +163,8 @@ bot.on('text', async (ctx) => {
 });
 
 bot.telegram.setMyCommands([
-  { command: 'help', description: 'What can this bot do?' },
-  { command: 'random', description: 'Get Random Pokemon' },
+  { command: 'help', description: 'What should I do?' },
+  { command: 'collection', description: 'View my Pokemons' },
 ]);
 
 bot.launch();
