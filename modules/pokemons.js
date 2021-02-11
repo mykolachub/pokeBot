@@ -69,6 +69,17 @@ async function getPokemonByType(filter) {
   };
 }
 
+async function getPokemonTypesList() {
+  const response = await api.getTypesList();
+  const { results } = response;
+  const types = [];
+  for (let i = 0; i < results.length; i += 1) {
+    const type = results[i].name;
+    types.push(type);
+  }
+  return types.map((x) => `/${x}`).join(', ');
+}
+
 // checking if pokemon
 async function isPokemon(attr) {
   const response = await api.getPokemonsList();
@@ -99,6 +110,7 @@ async function isPokemon(attr) {
 module.exports = {
   getPokemonInfo,
   getGenerationAndDescription,
+  getPokemonTypesList,
   getRandomPokemonId,
   getPokemonByType,
   isPokemon,
