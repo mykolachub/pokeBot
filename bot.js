@@ -29,7 +29,8 @@ let user;
 
 // local chat data
 const localData = {
-  id: null,
+  id: Number,
+  name: String,
 };
 
 const bot = new Telegraf(process.env.BOT_TOKEN_TEST);
@@ -45,10 +46,11 @@ async function randomPokemon(ctx) {
   try {
     const responses = await Promise.all(promises);
     const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
-    return ctx.replyWithPhoto(
-      { url: data.image },
-      { caption: template.getTemplateByPokemon(data), parse_mode: 'Markdown' }
-    );
+    const message = template.getTemplateByPokemon(data);
+    ctx.replyWithPhoto({ url: data.image }, { caption: message, parse_mode: 'Markdown' });
+    return {
+      name: data.name,
+    };
   } catch (err) {
     return ctx.replyWithMarkdown(errorMessage);
   }
@@ -65,7 +67,7 @@ function resetDailyPrize() {
 }
 
 function startDailyPrize(ctx) {
-  const keyboard = Keyboard.make([Key.callback('Get Random', 'random')]);
+  const keyboard = Keyboard.make([Key.callback('Catch Pokemon!', 'catch')]);
   return ctx.reply('You can catch a random Pokemon', keyboard.inline());
 }
 
@@ -79,11 +81,12 @@ bot.start(async (ctx) => {
         name: ctx.message.chat.first_name,
         userId: ctx.message.chat.id,
         pokemons: [],
-        dailyPrize: true,
+        dailyPrize: false,
       });
 
-      // setting id localy
+      // setting id, name localy
       localData.id = ctx.message.chat.id;
+      localData.name = ctx.message.chat.first_name;
 
       // сохраняю в базу
       user.save((e) => {
@@ -129,8 +132,32 @@ bot.command('collection', async (ctx) => {
   }
 });
 
-// sends random pokemon
-bot.action('catch', async (ctx) => {});
+async function catchPokemon(ctx) {
+  try {
+    const { dailyPrize, pokemons } = await User.findOne({ userId: localData.id });
+    if (!dailyPrize) {
+      const { name } = await randomPokemon(ctx);
+      const collection = [...pokemons];
+      collection.push(name);
+      await User.updateOne({ userId: localData.id }, { pokemons: collection, dailyPrize: true });
+      console.log(`${localData.name} got ${name} pokemon to collection`);
+      return;
+    }
+    ctx.replyWithMarkdown('You have already got your daily Pokemon!');
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+// catching a pokemon by button
+bot.action('catch', async (ctx) => {
+  await catchPokemon(ctx);
+});
+
+// catching a pokemon by command
+bot.command('catch', async (ctx) => {
+  await catchPokemon(ctx);
+});
 
 // sends help into
 bot.command('random', async (ctx) => {
