@@ -1,18 +1,24 @@
-const { Collection } = require('mongoose');
-
 // START TEMPLATE
 const getStart = () => `
 *Short Introduction:*
-That bot can send you short Pokémon's info
+Welcome to the Pokédex. Here you can search for almost all pokemons from 8 generations and get short info about them.
 
-*Сommands:*
-To get a Pokémon, send its _name_ or _index_
-To get list of Pokémons by type, send / + _type_
-To get random one, go with /random or use built-in keyboard`;
+*Gotta Catch 'Em All!*
+Every day you will be about to /catch random pokemon right to your /collection
+
+*What else to Do?*
+To get a Pokémon's info, send its _name_ or _index_
+To get a list of Pokémons by type, send /types
+To get random one, go with /random`;
 
 // created help info
 const getHelp = () => `
-here is help list`;
+*Help*
+
+Every day you will be about to /catch random pokemon right to your /collection
+To get a Pokémon's info, send its _name_ or _index_
+To get a list of Pokémons by type, send /types
+To get random one, go with /random`;
 
 // creates template from Pokemon's Info
 const getTemplateByPokemon = (response) => `
