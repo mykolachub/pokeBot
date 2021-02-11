@@ -54,6 +54,16 @@ async function randomPokemon(ctx) {
   }
 }
 
+function resetDailyPrize() {
+  const period = 1000 * 60 * 60 * 24; // every 24h
+  setInterval(async () => {
+    await User.updateMany({}, { dailyPrize: false }, (err) => {
+      if (err) console.log(err);
+    });
+    console.log('dailyPrize reset for all');
+  }, period);
+}
+
 function startDailyPrize(ctx) {
   const keyboard = Keyboard.make([Key.callback('Get Random', 'random')]);
   return ctx.reply('You can catch a random Pokemon', keyboard.inline());
@@ -69,7 +79,7 @@ bot.start(async (ctx) => {
         name: ctx.message.chat.first_name,
         userId: ctx.message.chat.id,
         pokemons: [],
-        dailyPrize: false,
+        dailyPrize: true,
       });
 
       // setting id localy
@@ -81,10 +91,17 @@ bot.start(async (ctx) => {
         console.log(`${ctx.message.chat.first_name} successfuly registered`);
       });
 
+      // сброс времени обновления
+      const serverTime = new Date();
+      serverTime.setHours(0, 0, 0);
+      serverTime.setDate(serverTime.getDate() + 1);
+      resetDailyPrize();
+
       // добавляю клавиатуру для навигации
       const keyboard = Keyboard.make(['/help', '/collection']);
       ctx.replyWithMarkdown(template.getStart(), keyboard.reply());
       startDailyPrize(ctx);
+
       return;
     }
     // в случае если бот уже был запущен и пользователь есть в базе
