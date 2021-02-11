@@ -99,7 +99,8 @@ bot.start(async (ctx) => {
 
       // добавляю клавиатуру для навигации
       const keyboard = Keyboard.make(['/help', '/collection']);
-      ctx.replyWithMarkdown(template.getStart(), keyboard.reply());
+      const message = template.getStart();
+      ctx.replyWithMarkdown(message, keyboard.reply());
       startDailyPrize(ctx);
 
       return;
@@ -112,21 +113,39 @@ bot.start(async (ctx) => {
 });
 
 // sends help into
-bot.command('help', (ctx) => ctx.replyWithMarkdown(template.getHelp()));
+bot.command('help', (ctx) => {
+  const message = template.getHelp();
+  ctx.replyWithMarkdown(message);
+});
 
 // get and send user collection
 bot.command('collection', async (ctx) => {
   try {
     const { pokemons } = await User.findOne({ userId: localData.id });
-    ctx.replyWithMarkdown(template.createCollectionTemplate(pokemons));
+    const message = template.createCollectionTemplate(pokemons);
+    ctx.replyWithMarkdown(message);
   } catch (error) {
     console.log(error);
   }
 });
 
 // sends random pokemon
-bot.action('random', async (ctx) => {
+bot.action('catch', async (ctx) => {});
+
+// sends help into
+bot.command('random', async (ctx) => {
   await randomPokemon(ctx);
+});
+
+// sends pokemons types
+bot.command('types', async (ctx) => {
+  try {
+    const list = await pokemon.getPokemonTypesList();
+    const message = template.getTemplateTypesList(list);
+    ctx.replyWithMarkdown(message);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 // sends random pokemon
@@ -154,10 +173,8 @@ bot.on('text', async (ctx) => {
         try {
           const responses = await Promise.all(promises);
           const data = responses.reduce((acc, val) => ({ ...acc, ...val }));
-          ctx.replyWithPhoto(
-            { url: data.image },
-            { caption: template.getTemplateByPokemon(data), parse_mode: 'Markdown' }
-          );
+          const message = template.getTemplateByPokemon(data);
+          ctx.replyWithPhoto({ url: data.image }, { caption: message, parse_mode: 'Markdown' });
         } catch (err) {
           ctx.replyWithMarkdown(errorMessage);
         }
@@ -166,7 +183,8 @@ bot.on('text', async (ctx) => {
         const errorMessage = 'There is no such Pokémon _type_.. Try again!';
         try {
           const data = await pokemon.getPokemonByType(filter);
-          ctx.replyWithMarkdown(template.getTemplateByType(filter, data));
+          const message = template.getTemplateByType(filter, data);
+          ctx.replyWithMarkdown(message);
         } catch (error) {
           ctx.replyWithMarkdown(errorMessage);
         }
@@ -182,6 +200,9 @@ bot.on('text', async (ctx) => {
 bot.telegram.setMyCommands([
   { command: 'help', description: 'What should I do?' },
   { command: 'collection', description: 'View my Pokemons' },
+  { command: 'types', description: 'View Pokemons Types' },
+  { command: 'random', description: 'Get Random Pokemon' },
+  { command: 'catch', description: 'Get Daily Prize' },
 ]);
 
 bot.launch();
