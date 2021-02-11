@@ -59,14 +59,11 @@ function startDailyPrize(ctx) {
   return ctx.reply('You can catch a random Pokemon', keyboard.inline());
 }
 
-bot.start((ctx) => {
-  // проверка есть ли юзер в базе
-  User.find({ userId: ctx.message.chat.id }, (err, docs) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    if (docs.length === 0) {
+bot.start(async (ctx) => {
+  try {
+    const { length } = await User.find({ userId: ctx.message.chat.id });
+    // проверка есть ли юзер в базе
+    if (length === 0) {
       // создает нового юзера
       user = new User({
         name: ctx.message.chat.first_name,
@@ -84,13 +81,17 @@ bot.start((ctx) => {
         console.log(`${ctx.message.chat.first_name} successfuly registered`);
       });
 
+      // добавляю клавиатуру для навигации
       const keyboard = Keyboard.make(['/help', '/collection']);
       ctx.replyWithMarkdown(template.getStart(), keyboard.reply());
       startDailyPrize(ctx);
       return;
     }
+    // в случае если бот уже был запущен и пользователь есть в базе
     ctx.reply('Bot has already been started');
-  });
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 // sends help into
@@ -98,13 +99,12 @@ bot.command('help', (ctx) => ctx.replyWithMarkdown(template.getHelp()));
 
 // get and send user collection
 bot.command('collection', async (ctx) => {
-  User.findOne({ userId: localData.id }, (err, user) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    if (user.pokemons) ctx.reply(template.createCollectionTemplate(user.pokemons));
-  });
+  try {
+    const { pokemons } = await User.findOne({ userId: localData.id });
+    ctx.replyWithMarkdown(template.createCollectionTemplate(pokemons));
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // sends random pokemon
