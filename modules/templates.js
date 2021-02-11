@@ -39,6 +39,12 @@ Here is list of *${filter}* pokemons: ${data.length} ones
 
 ${data.list}`;
 
+// create template for all pokemons types
+const getTemplateTypesList = (list) => `
+Here is all 20 Pokemons' types:
+
+${list}`;
+
 const createCollectionTemplate = (collection) => {
   if (collection.length === 0) {
     return `
@@ -60,4 +66,5 @@ module.exports = {
   getTemplateByPokemon,
   getTemplateByType,
   createCollectionTemplate,
+  getTemplateTypesList,
 };
